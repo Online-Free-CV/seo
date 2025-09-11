@@ -17,15 +17,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 1) Install Node (don't set cache: pnpm here)
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
-          cache: pnpm
 
-      - name: Enable corepack (pnpm)
-        run: corepack enable
+      # 2) Install pnpm and enable caching
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+          dest: ~/.pnpm-store
+
+      # (Optional) Use pnpm cache
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -33,8 +47,8 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      # If you use semantic-release/changesets, keep this; otherwise remove
-      - name: Release (optional)
+      # If you use standard-version in CI:
+      - name: Release with standard-version
         run: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,7 +68,7 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Preview package contents
+      - name: Preview package
         if: steps.exists.outputs.exists == 'false'
         run: npm pack --dry-run
 
