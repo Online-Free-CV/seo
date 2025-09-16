@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "SEO toolkit for OnlineFreeCV – shared utilities for titles, meta tags, canonicals, and JSON-LD across all templates.",
   "license": "MIT",
+  "private": false,
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
