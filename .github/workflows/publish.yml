@@ -2,78 +2,43 @@ name: Publish Package
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch: {}
-
-permissions:
-  contents: write
-  id-token: write
+    branches:
+      - main
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      # 1) Install Node (don't set cache: pnpm here)
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org/'
 
-      # 2) Install pnpm and enable caching
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-          dest: ~/.pnpm-store
-
-      # (Optional) Use pnpm cache
-      - name: Restore pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-
+      - name: Install pnpm
+        run: npm install -g pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Build
+      - name: Configure Git
+        run: |
+          git config --global user.email "liaqatsaeed007@gmail.com"
+          git config --global user.name "Liaqat Saeed"
+
+      - name: Build package
         run: pnpm run build
 
-      # If you use standard-version in CI:
-      - name: Release with standard-version
+      - name: Bump version and generate changelog
         run: pnpm run release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Get package name and version
-        id: pkg
-        run: |
-          echo "NAME=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
-          echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
-      - name: Check if version already exists on npm
-        id: exists
-        run: |
-          if npm view "${{ steps.pkg.outputs.NAME }}@${{ steps.pkg.outputs.VERSION }}" version > /dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Preview package
-        if: steps.exists.outputs.exists == 'false'
-        run: npm pack --dry-run
-
-      - name: Publish to npm
-        if: steps.exists.outputs.exists == 'false'
-        run: npm publish --provenance --access public
+      - name: Publish package
+        run: pnpm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
