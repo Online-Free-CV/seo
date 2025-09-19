@@ -5,3 +5,5 @@ export * from "./core/jsonld";
 export * from "./templates/persona";
 export * from "./react/Head";
 export * from "./types";
+export * from "./routes/robots";
+export * from "./routes/sitemap";
