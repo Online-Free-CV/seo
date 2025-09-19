@@ -1,6 +1,6 @@
 {
   "name": "@onlinefreecv/seo",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "SEO toolkit for OnlineFreeCV – shared utilities for titles, meta tags, canonicals, and JSON-LD across all templates.",
   "license": "MIT",
   "private": false,
